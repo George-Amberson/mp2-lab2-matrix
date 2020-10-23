@@ -26,10 +26,19 @@ protected:
 public:
   TVector(int s = 10, int si = 0);          // одновременно конструктор по умолчанию
                                             // и конструктор с параметрами
-  TVector(const TVector &v);                // конструктор копирования
+  TVector(const TVector &v); 
+  TVector(TVector &&v);// конструктор копирования
   ~TVector();
   int GetSize()   const   { return Size;       } // размер вектора
   int GetStartIndex()const{ return StartIndex; }
+  void SetSize(int x)
+  {
+	  Size = x;
+  }
+  void SetStartIndex(int x)
+  {
+	  StartIndex = x;
+  }
   ValType* GetVector()const { return pVector; }// индекс первого элемента
   ValType& operator[](int pos); 
   ValType& operator[](int pos) const;// доступ
@@ -46,7 +55,15 @@ public:
   TVector  operator+(const TVector &v);     // сложение
   TVector  operator-(const TVector &v);     // вычитание
   ValType  operator*(const TVector &v);     // скалярное произведение
-
+  int FindIndex()
+  {
+	  for (int i = (*this).GetStartIndex(); i < (*this).GetSize(); i++)
+	  {
+		  if (((*this)[i] != 0))return i;
+	  }
+	  return -1;
+  }
+ 
   // ввод-вывод
   friend istream& operator>>(istream &in, TVector &v)
   {
@@ -56,8 +73,10 @@ public:
   }
   friend ostream& operator<<(ostream &out, const TVector &v)
   {
-    for (int i = 0; i < v.Size-v.StartIndex; i++)
-      out << v.pVector[i] << ' ';
+	  for (int i = 0; i < v.Size - v.StartIndex; i++) {
+		  out << v.pVector[i] << ' ';
+	  }
+	out << endl;
     return out;
   }
 };
@@ -87,23 +106,33 @@ TVector<ValType>::TVector(const TVector<ValType> &v)
 	StartIndex = v.StartIndex;
 	Size = v.Size;
 } /*-------------------------------------------------------------------------*/
+template <class ValType> //конструктор копирования
+TVector<ValType>::TVector( TVector<ValType> &&v)
+{
 
+	pVector =v.pVector;
+	v.pVector = nullptr;
+	StartIndex = v.StartIndex;
+	Size = v.Size;
+} 
 template <class ValType>
 TVector<ValType>::~TVector()
 {
-	delete[]pVector;
+	if (pVector != nullptr) {
+		delete[]pVector;
+	}
 } /*-------------------------------------------------------------------------*/
 
 template <class ValType> // доступ
 ValType& TVector<ValType>::operator[](int pos)
 {
-	if ((pos < StartIndex) || (pos < 0) || (pos > StartIndex + Size)) throw logic_error("");
+	if ((pos < StartIndex) || (pos < 0) || (pos >Size)) throw logic_error("");
     return pVector[pos-StartIndex];
 } 
 template <class ValType> // доступ
 ValType& TVector<ValType>::operator[](int pos)const
 {
-	if ((pos < StartIndex) || (pos < 0) || (pos > StartIndex + Size)) throw logic_error("");
+	if ((pos < StartIndex) || (pos < 0) || (pos > Size)) throw logic_error("");
 	return pVector[pos - StartIndex];
 } /*-------------------------------------------------------------------------*/
 
@@ -243,7 +272,7 @@ public:
   TMatrix& operator= (const TMatrix &mt);        // присваивание
   TMatrix  operator+ (const TMatrix &mt);        // сложение
   TMatrix  operator- (const TMatrix &mt);        // вычитание
-
+ TMatrix( TVector<TVector<ValType> >&& mt);
   // ввод / вывод
   friend istream& operator>>(istream &in, TMatrix &mt)
   {
@@ -371,7 +400,61 @@ TMatrix<ValType> TMatrix<ValType>::operator-(const TMatrix<ValType> &mt)
 	}
 	return Res;
 } /*--------------------------------------------------s-----------------------*/
+template <class ValType> // вычитание
+TMatrix<ValType>::TMatrix( TVector<TVector<ValType> > &&mt):TVector<TVector<ValType> >(move(mt))
+{
+	
+	bool f = true;
+	for (int i = 0; i < (*this).GetSize(); i++)
+	{
+		if ((*this)[i][i] == 0)
+		{
+			int j = -1;
+			int k = i+1;
+			while ((j == -1) && (k < (*this).GetSize()))
+			{
+				if((*this)[k][i]!=0)j = k;
+				k++;
+			}
+			
+			if (j != -1)
+			{
+				swap((*this)[i], (*this)[j]);
+				f = true;
+			}
+			else
+			{
+				f = false;
+				
+			}
+		}
+		
+		if (f) {
+			ValType x = 1 / (*this)[i][i];
 
+			(*this)[i] = (*this)[i] * x;
+		
+			for (int j = i + 1; j < mt.GetSize(); j++)
+			{
+				(*this)[j] = (*this)[j] - ((*this)[i] * (*this)[j][i]);
+			}
+		
+		}
+		
+
+	}
+	cout << (*this);
+	for (int i = (*this).GetStartIndex(); i < (*this).GetSize(); i++)
+	{
+		for (int j = i; j < (*this).GetSize(); j++)
+		{
+			(*this)[i][j - i] = move((*this)[i][j]);
+		}
+		
+		(*this)[i].SetStartIndex(i);
+	}
+
+} 
 // TVector О3 Л2 П4 С6
 // TMatrix О2 Л2 П3 С3
 #endif

@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include "utmatrix.h"
+#include <iomanip>
 //---------------------------------------------------------------------------
 
 int main()
@@ -27,7 +28,6 @@ int main()
   cout << "Matrix a = " << endl << a << endl;
   cout << "Matrix b = " << endl << b << endl;
   cout << "Matrix c = a + b" << endl << c << endl;
-  
-  return 0;
+	return 0;
 }
 //---------------------------------------------------------------------------
