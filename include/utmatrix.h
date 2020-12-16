@@ -28,7 +28,7 @@ public:
                                             // и конструктор с параметрами
   TVector(const TVector &v); 
   TVector(TVector &&v);// конструктор копирования
-  ~TVector();
+  virtual ~TVector();
   int GetSize()   const   { return Size;       } // размер вектора
   int GetStartIndex()const{ return StartIndex; }
   void SetSize(int x)
